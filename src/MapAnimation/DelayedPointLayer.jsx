@@ -62,6 +62,7 @@ void main(void) {
 `;
 
 class DelayedPointLayer extends ScatterplotLayer {
+  
   initializeState() {
     super.initializeState();
     this.getAttributeManager().addInstanced({

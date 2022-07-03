@@ -9,28 +9,9 @@ import {
 
 import { DeckGLMap } from './MapAnimation/DeckGLMap';
 
-export const MapAnimation: React.FC<{
-	titleText: string;
-	titleColor: string;
-}> = ({titleText, titleColor}) => {
+export const MapAnimation: React.FC = () => {
 	const frame = useCurrentFrame();
 	const {durationInFrames, fps} = useVideoConfig();
-
-	// Animate from 0 to 1 after 25 frames
-	const logoTranslationProgress = spring({
-		frame: frame - 25,
-		fps,
-		config: {
-			damping: 100,
-		},
-	});
-
-	// Move the logo up by 150 pixels once the transition starts
-	const logoTranslation = interpolate(
-		logoTranslationProgress,
-		[0, 1],
-		[0, -150]
-	);
 
 	// Fade out the animation at the end
 	const opacity = interpolate(
@@ -43,7 +24,6 @@ export const MapAnimation: React.FC<{
 		}
 	);
 
-	// A <AbsoluteFill> is just a absolutely positioned <div>!
 	return (
 		<AbsoluteFill style={{backgroundColor: 'white'}}>
 			<AbsoluteFill style={{opacity}}>

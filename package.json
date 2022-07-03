@@ -15,6 +15,7 @@
     "@luma.gl/constants": "^8.5.14",
     "@remotion/cli": "^3.0.0",
     "@remotion/eslint-config": "^3.0.0",
+    "animejs": "^3.2.1",
     "d3": "^7.5.0",
     "deck.gl": "^8.8.1",
     "eslint": "^8.14.0",

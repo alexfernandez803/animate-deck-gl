@@ -1,11 +1,12 @@
 import React from 'react';
-import DeckGL, { GeoJsonLayer, ArcLayer, ScatterplotLayer } from 'deck.gl';
-import { interpolate, interpolateColors, useCurrentFrame, useVideoConfig } from 'remotion';
-import { useState } from 'react';
+import DeckGL, { GeoJsonLayer } from 'deck.gl';
+import DelayedPointLayer from './DelayedPointLayer'
+import { extent, scaleLinear } from 'd3';
+import { interpolate, useCurrentFrame, useVideoConfig } from 'remotion';
 import GL from '@luma.gl/constants';
 import librariesData from './data/libraries.json';
 import { StaticMap } from 'react-map-gl';
-import { easeBackInOut } from 'd3';
+
 const COUNTRIES =
   'https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_admin_0_scale_rank.geojson'; //eslint-disable-line
 
@@ -18,94 +19,80 @@ const INITIAL_VIEW_STATE = {
   zoom: 6.0,
   pitch: 52.84408429581342,
 };
-const COUNTRY_VIEW_STATE = {
+const END_VIEW_STATE = {
   longitude: -97.01492690488716,
   latitude: 36.86409651033726,
   bearing: -2.3684643143544513,
   zoom: 3.9115186793818326,
   pitch: 30.894226099945293,
 };
-const COUNTRY2_VIEW_STATE = {
-  longitude: -97.01492690488716,
-  latitude: 36.86409651033726,
-  bearing: 6.3684643143544513,
-  zoom: 3.9115186793818326,
-  pitch: 40.894226099945293,
-};
 
-const librariesAnimation = { enterProgress: 0, duration: 2000 };
+
+const US_CENTER = [-98.5795, 39.8283];
 
 export const DeckGLMap: React.FC = () => {
   const frame = useCurrentFrame();
-  const { durationInFrames } = useVideoConfig();
-  const locations = [
-    INITIAL_VIEW_STATE,
-    COUNTRY_VIEW_STATE,
-  ]
-  const [viewState, setViewState] = useState(INITIAL_VIEW_STATE);
-  const zoom = interpolate(frame, [0, 20], [6, 3.9115186793818326], {
-    extrapolateRight: "clamp",
-  });
-  const bearing = interpolate(frame, [0, 20, 40], [-29.368464314354455,
-  -2.3684643143544513, 6.3684643143544513], {
-    extrapolateRight: "clamp",
-  });
-  const pitch = interpolate(frame, [0, 20, 40], [52.84408429581342, 30.894226099945293, 40.894226099945293], {
-    extrapolateRight: "clamp",
-  });
-  const latlang = interpolate(frame, [0, 20], [0, 1], {
+	const {durationInFrames, fps} = useVideoConfig();
+
+  const zoom = interpolate(frame, [0, 30], [INITIAL_VIEW_STATE.zoom, END_VIEW_STATE.zoom], {
     extrapolateRight: "clamp",
   });
 
+  const bearing = interpolate(frame, [0, 20, 30], [
+    -29.368464314354455,
+    -2, -2.3684643143544513], 
+  {
+    extrapolateRight: "clamp",
+  });
 
-  const colorConst = [[255, 255, 255], [60, 100, 200]]
-  const radius = [500, 5000]
-  const colorAnimate = interpolate(
-    frame,
-    [0, 10, durationInFrames - 10, durationInFrames],
-    // v--v---v----------------------v
-    [0, 1, 1, 0]
-  );
+  const pitch = interpolate(frame, [0, 20], [INITIAL_VIEW_STATE.pitch, END_VIEW_STATE.pitch], {
+    extrapolateRight: "clamp",
+  });
 
-  React.useEffect(() => {
-    const { latitude, longitude } = locations[Math.max(latlang)] ? locations[Math.max(latlang)] : COUNTRY_VIEW_STATE
-    setViewState(
-      {
-        ...viewState,
-        zoom,
-        bearing,
-        pitch,
-        latitude,
-        longitude
+  const longitude = interpolate(frame, [0, 20], [INITIAL_VIEW_STATE.longitude, END_VIEW_STATE.longitude],
+    {
+      extrapolateRight: "clamp",
+    });
+  const latitude = interpolate(frame, [0, 20], [INITIAL_VIEW_STATE.latitude, END_VIEW_STATE.latitude],
+    {
+      extrapolateRight: "clamp",
+    });
 
-      }
-    )
-  }, [zoom, bearing, latlang]);
+   
+  // map longitude to a delay property between 0 and 1
+  const longitudeDelayScale = scaleLinear()
+    .domain(extent(librariesData, d => d.position[0]))
+    .range([1, 0]);
+
+  // map distance to target location to a delay property between 0 and 1
+  const targetDelayScale = scaleLinear()
+    .domain(extent(librariesData, d => d.distToTarget))
+    .range([0, 1]);
 
 
+  const animationProgress = interpolate(frame, [0, 30], [0, 1], {
+    extrapolateRight: "clamp",
+  });
 
-  return (
-    <DeckGL
-      initialViewState={viewState}
-    >
-         <StaticMap reuseMaps mapStyle={MAP_STYLE} preventStyleDiffing={true} />
-      <GeoJsonLayer
-        id="base-map"
-        data={COUNTRIES}
-        stroked={true}
-        filled={true}
-        lineWidthMinPixels={2}
-        opacity={0.4}
-        getLineColor={[60, 60, 60]}
-        getFillColor={[200, 200, 200]}
-      />
-      <ScatterplotLayer
-        id='points-layer'
-        data={librariesData}
-        getPosition={d => d.position}
-        getFillColor={colorConst[colorAnimate]}
-        getRadius={radius[colorAnimate]}
-        parameters={{
+  librariesData.forEach(lib => {
+    lib.distToTarget =
+      Math.pow(lib.position[0] - US_CENTER[0], 2) +
+      Math.pow(lib.position[1] - US_CENTER[1], 2);
+  })
+
+  const librariesLayer = new DelayedPointLayer({
+        id: 'points-layer',
+        data: librariesData,
+        getPosition: d => d.position,
+        getFillColor: [250, 100, 200],
+        getRadius: 50,
+        radiusMinPixels: 3,
+        animationProgress: animationProgress,
+        // specify the delay factor for each point (value between 0 and 1)
+        getDelayFactor: d => {
+          return longitudeDelayScale(d.position[0])
+        },
+        parameters: {
           // prevent flicker from z-fighting
           [GL.DEPTH_TEST]: false,
           // turn on additive blending to make them look more glowy
@@ -113,18 +100,34 @@ export const DeckGLMap: React.FC = () => {
           [GL.BLEND_SRC_RGB]: GL.ONE,
           [GL.BLEND_DST_RGB]: GL.ONE,
           [GL.BLEND_EQUATION]: GL.FUNC_ADD,
-        }}
-        transitions={
-          {
-            getFillColor: {
-              duration: 3000,
-            },
-            getRadius: {
-              duration: librariesAnimation.duration,
-              easing: easeBackInOut,
-            }
-          }
+        },
+      });
+
+     
+  return (
+    <DeckGL
+      initialViewState={
+        {
+          ...INITIAL_VIEW_STATE,
+          zoom,
+          bearing,
+          pitch,
+          latitude,
+          longitude  
         }
+      }
+      layers={[librariesLayer]}
+    >
+      <StaticMap reuseMaps mapStyle={MAP_STYLE} preventStyleDiffing={true} />
+      <GeoJsonLayer
+        id="base-map"
+        data={COUNTRIES}
+        stroked={true}
+        filled={true}
+        lineWidthMinPixels={2}
+        opacity={0.4}
+        getLineColor={[23, 21, 21]}
+        getFillColor={[118, 118, 118]}
       />
     </DeckGL>
   );
