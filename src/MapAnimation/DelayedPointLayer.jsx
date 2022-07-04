@@ -1,4 +1,4 @@
-import { ScatterplotLayer } from '@deck.gl/layers';
+import {ScatterplotLayer} from '@deck.gl/layers';
 
 const fs = `
 #define SHADER_NAME delayed-point-layer-fragment-shader
@@ -62,24 +62,23 @@ void main(void) {
 `;
 
 class DelayedPointLayer extends ScatterplotLayer {
-  
-  initializeState() {
-    super.initializeState();
-    this.getAttributeManager().addInstanced({
-      instanceDelayFactor: {
-        size: 1,
-        accessor: 'getDelayFactor',
-      },
-    });
-  }
+	initializeState() {
+		super.initializeState();
+		this.getAttributeManager().addInstanced({
+			instanceDelayFactor: {
+				size: 1,
+				accessor: 'getDelayFactor',
+			},
+		});
+	}
 
-  // override getShaders to inject into vertex shader and add a new fragment shader
-  getShaders() {
-    return Object.assign({}, super.getShaders(), {
-      // inject: https://github.com/uber/luma.gl/blob/master/docs/api-reference/shadertools/assemble-shaders.md
-      inject: {
-        // inject at vertex shader (`vs`) declarations
-        'vs:#decl': `
+	// override getShaders to inject into vertex shader and add a new fragment shader
+	getShaders() {
+		return Object.assign({}, super.getShaders(), {
+			// inject: https://github.com/uber/luma.gl/blob/master/docs/api-reference/shadertools/assemble-shaders.md
+			inject: {
+				// inject at vertex shader (`vs`) declarations
+				'vs:#decl': `
         attribute float instanceDelayFactor;
         uniform float animationProgress;
         uniform float numPoints;
@@ -96,43 +95,43 @@ class DelayedPointLayer extends ScatterplotLayer {
         }
         `,
 
-        // inject at vertex shader (`vs`) end of function
-        'vs:#main-end': `
+				// inject at vertex shader (`vs`) end of function
+				'vs:#main-end': `
         instanceAnimationProgress = delayedAnimationProgress(instanceDelayFactor, animationProgress, pointDuration);
         `,
-      },
-      // add new fragment shader (`fs`)
-      fs,
-    });
-  }
+			},
+			// add new fragment shader (`fs`)
+			fs,
+		});
+	}
 
-  // override draw fucntion
-  draw(opts) {
-    // pointDuration = proportion of animation that is used to animate an individual (value between 0 and 1 where 1 is full duration)
-    // animationProgress = how far through the animation we are (value between 0 and 1)
-    const { animationProgress = 0.0, pointDuration = 0.25, data } = this.props;
+	// override draw fucntion
+	draw(opts) {
+		// pointDuration = proportion of animation that is used to animate an individual (value between 0 and 1 where 1 is full duration)
+		// animationProgress = how far through the animation we are (value between 0 and 1)
+		const {animationProgress = 0.0, pointDuration = 0.25, data} = this.props;
 
-    // add uniforms
-    const uniforms = Object.assign({}, opts.uniforms, {
-      animationProgress,
-      pointDuration,
-      numPoints: data.length,
-    });
-    super.draw(Object.assign({}, opts, { uniforms }));
-  }
+		// add uniforms
+		const uniforms = Object.assign({}, opts.uniforms, {
+			animationProgress,
+			pointDuration,
+			numPoints: data.length,
+		});
+		super.draw(Object.assign({}, opts, {uniforms}));
+	}
 }
 
 const defaultProps = {
-  // when a given point begins animating (value between 0 and 1)
-  // 0 = the first point to animate, 1 = the last point to animate
-  // the last point begins animating when animationProgress = 1 - pointDuration.
-  getDelayFactor: { type: 'accessor', value: 0.0 },
+	// when a given point begins animating (value between 0 and 1)
+	// 0 = the first point to animate, 1 = the last point to animate
+	// the last point begins animating when animationProgress = 1 - pointDuration.
+	getDelayFactor: {type: 'accessor', value: 0.0},
 };
 
 DelayedPointLayer.defaultProps = Object.assign(
-  {},
-  ScatterplotLayer.defaultProps,
-  defaultProps
+	{},
+	ScatterplotLayer.defaultProps,
+	defaultProps
 );
 
 export default DelayedPointLayer;

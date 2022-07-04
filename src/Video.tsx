@@ -11,14 +11,11 @@ export const RemotionVideo: React.FC = () => {
 				// npx remotion render src/index.tsx <id> out/video.mp4
 				id="MapAnimation"
 				component={MapAnimation}
-				durationInFrames={80}
-				fps={24}
+				durationInFrames={250}
+				fps={100}
 				width={1920}
 				height={1080}
-				defaultProps={{
-					titleText: 'Welcome to Remotion',
-					titleColor: 'black',
-				}}
+		
 			/>
 		
 		</>

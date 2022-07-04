@@ -7,7 +7,7 @@ import {
 	useVideoConfig,
 } from 'remotion';
 
-import { DeckGLMap } from './MapAnimation/DeckGLMap';
+import {DeckGLMap} from './MapAnimation/DeckGLMap';
 
 export const MapAnimation: React.FC = () => {
 	const frame = useCurrentFrame();
@@ -26,14 +26,9 @@ export const MapAnimation: React.FC = () => {
 
 	return (
 		<AbsoluteFill style={{backgroundColor: 'white'}}>
-			<AbsoluteFill style={{opacity}}>
-			
-				{/* Sequences can shift the time for its children! */}
-				<Sequence from={0}>
-					<DeckGLMap />
-				</Sequence>
-			
-			</AbsoluteFill>
+			<Sequence from={0} durationInFrames={250}>
+				<DeckGLMap />
+			</Sequence>
 		</AbsoluteFill>
 	);
 };

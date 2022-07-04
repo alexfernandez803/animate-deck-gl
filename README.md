@@ -1,12 +1,8 @@
-# Remotion video
+# deck.gl + remotion animation
 
-<p align="center">
-  <a href="https://github.com/remotion-dev/logo">
-    <img src="https://github.com/remotion-dev/logo/raw/main/withtitle/element-0.png">
-  </a>
-</p>
+** A map animation using remotion and deck.gl, heavily inspired by <a href="https://github.com/pbeshai/deckgl-point-animation">
+Peter Beshai - deck.gl point animation demo</a>. The dataset used is all public libraries in the United States.
 
-Welcome to your Remotion project!
 
 ## Commands
 
