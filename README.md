@@ -1,7 +1,13 @@
 # deck.gl + remotion animation
 
-** A map animation using remotion and deck.gl, heavily inspired by <a href="https://github.com/pbeshai/deckgl-point-animation">
+A map animation using remotion and deck.gl, heavily inspired by <a href="https://github.com/pbeshai/deckgl-point-animation">
 Peter Beshai - deck.gl point animation demo</a>. The dataset used is all public libraries in the United States.
+
+<a href="https://buymeacoffee.com/hobbymungers" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
+
+
+
+https://user-images.githubusercontent.com/7582277/177120276-01a9f513-ecda-4e2a-a2cc-d46c7e91442e.mp4
 
 
 ## Commands
