@@ -1,14 +1,12 @@
-import DeckGL, {GeoJsonLayer} from 'deck.gl';
+import DeckGL from 'deck.gl';
 import DelayedPointLayer from './DelayedPointLayer';
 import {extent, scaleLinear} from 'd3';
 import {interpolate, useCurrentFrame, useVideoConfig} from 'remotion';
 import GL from '@luma.gl/constants';
-import librariesData from './data/libraries.json';
+import {librariesData, LibraryData} from './data/libraries';
 import {StaticMap} from 'react-map-gl';
 import {Extrapolate} from './Utils';
 
-const COUNTRIES =
-	'https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_admin_0_scale_rank.geojson'; //eslint-disable-line
 const MAP_STYLE =
 	'https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json';
 
@@ -27,9 +25,9 @@ const END_VIEW_STATE = {
 	pitch: 30.894226099945293,
 };
 
-const US_CENTER = [-98.5795, 39.8283];
+const US_CENTER: [number, number] = [-98.5795, 39.8283]; // Replace 'lat' and 'lon' with actual latitude and longitude values.
 
-export const DeckGLMap = ({}) => {
+export const DeckGLMap = () => {
 	const frame = useCurrentFrame();
 	const {durationInFrames} = useVideoConfig();
 	const delayeEnd = 10;
@@ -73,15 +71,15 @@ export const DeckGLMap = ({}) => {
 		Extrapolate.CLAMP
 	);
 
-	// map longitude to a delay property between 0 and 1
-	const longitudeDelayScale = scaleLinear()
+	// Map longitude to a delay property between 0 and 1
+	const longitudeDelayScale = scaleLinear<number>()
 		.domain(extent(librariesData, (d) => d.position[0]))
 		.range([1, 0]);
 
-	librariesData.forEach((lib) => {
+	librariesData.forEach((lib: LibraryData) => {
 		lib.distToTarget =
-			Math.pow(lib.position[0] - US_CENTER[0], 2) +
-			Math.pow(lib.position[1] - US_CENTER[1], 2);
+			(lib.position[0] - US_CENTER[0]) ** 2 +
+			(lib.position[1] - US_CENTER[1]) ** 2;
 	});
 
 	const librariesLayer = new DelayedPointLayer({
@@ -91,15 +89,15 @@ export const DeckGLMap = ({}) => {
 		getFillColor: [250, 100, 200],
 		getRadius: 50,
 		radiusMinPixels: 3,
-		animationProgress: animationProgress,
-		// specify the delay factor for each point (value between 0 and 1)
+		animationProgress,
+		// Specify the delay factor for each point (value between 0 and 1)
 		getDelayFactor: (d) => {
 			return longitudeDelayScale(d.position[0]);
 		},
 		parameters: {
-			// prevent flicker from z-fighting
+			// Prevent flicker from z-fighting
 			[GL.DEPTH_TEST]: false,
-			// turn on additive blending to make them look more glowy
+			// Turn on additive blending to make them look more glowy
 			[GL.BLEND]: true,
 			[GL.BLEND_SRC_RGB]: GL.ONE,
 			[GL.BLEND_DST_RGB]: GL.ONE,
@@ -119,7 +117,7 @@ export const DeckGLMap = ({}) => {
 			}}
 			layers={[librariesLayer]}
 		>
-			<StaticMap reuseMaps mapStyle={MAP_STYLE} preventStyleDiffing={true} />
+			<StaticMap reuseMaps preventStyleDiffing mapStyle={MAP_STYLE} />
 		</DeckGL>
 	);
 };

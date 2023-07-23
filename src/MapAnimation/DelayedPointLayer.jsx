@@ -72,12 +72,11 @@ class DelayedPointLayer extends ScatterplotLayer {
 		});
 	}
 
-	// override getShaders to inject into vertex shader and add a new fragment shader
+	// Override getShaders to inject into vertex shader and add a new fragment shader
 	getShaders() {
-		return Object.assign({}, super.getShaders(), {
-			// inject: https://github.com/uber/luma.gl/blob/master/docs/api-reference/shadertools/assemble-shaders.md
+		return { ...super.getShaders(), // Inject: https://github.com/uber/luma.gl/blob/master/docs/api-reference/shadertools/assemble-shaders.md
 			inject: {
-				// inject at vertex shader (`vs`) declarations
+				// Inject at vertex shader (`vs`) declarations
 				'vs:#decl': `
         attribute float instanceDelayFactor;
         uniform float animationProgress;
@@ -95,43 +94,40 @@ class DelayedPointLayer extends ScatterplotLayer {
         }
         `,
 
-				// inject at vertex shader (`vs`) end of function
+				// Inject at vertex shader (`vs`) end of function
 				'vs:#main-end': `
         instanceAnimationProgress = delayedAnimationProgress(instanceDelayFactor, animationProgress, pointDuration);
         `,
 			},
-			// add new fragment shader (`fs`)
-			fs,
-		});
+			// Add new fragment shader (`fs`)
+			fs,};
 	}
 
-	// override draw fucntion
+	// Override draw fucntion
 	draw(opts) {
-		// pointDuration = proportion of animation that is used to animate an individual (value between 0 and 1 where 1 is full duration)
+		// PointDuration = proportion of animation that is used to animate an individual (value between 0 and 1 where 1 is full duration)
 		// animationProgress = how far through the animation we are (value between 0 and 1)
 		const {animationProgress = 0.0, pointDuration = 0.25, data} = this.props;
 
-		// add uniforms
-		const uniforms = Object.assign({}, opts.uniforms, {
-			animationProgress,
+		// Add uniforms
+		const uniforms = { ...opts.uniforms, animationProgress,
 			pointDuration,
-			numPoints: data.length,
-		});
-		super.draw(Object.assign({}, opts, {uniforms}));
+			numPoints: data.length,};
+		super.draw({ ...opts, uniforms});
 	}
 }
 
 const defaultProps = {
-	// when a given point begins animating (value between 0 and 1)
+	// When a given point begins animating (value between 0 and 1)
 	// 0 = the first point to animate, 1 = the last point to animate
 	// the last point begins animating when animationProgress = 1 - pointDuration.
 	getDelayFactor: {type: 'accessor', value: 0.0},
 };
 
-DelayedPointLayer.defaultProps = Object.assign(
-	{},
-	ScatterplotLayer.defaultProps,
-	defaultProps
-);
+DelayedPointLayer.defaultProps = {
+	
+	...ScatterplotLayer.defaultProps,
+	...defaultProps
+};
 
 export default DelayedPointLayer;
